@@ -39,7 +39,19 @@ builder.Services.AddHostedService<BotHostedService>();
 
 builder.Services.AddHealthChecks();
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("PublicReadOnly", policy =>
+    {
+        policy.AllowAnyOrigin()
+              .WithMethods("GET")
+              .AllowAnyHeader();
+    });
+});
+
 var app = builder.Build();
+
+app.UseCors("PublicReadOnly");
 
 using (var scope = app.Services.CreateScope())
 {
@@ -50,5 +62,19 @@ using (var scope = app.Services.CreateScope())
 app.MapHealthChecks("/healthz");
 app.MapGet("/", () => Results.Text("WalletHawk bot is alive 🦅"));
 app.MapPost("/webhooks/cryptobot", CryptoBotWebhook.HandleAsync);
+
+app.MapGet("/stats", async (AppDbContext db, CancellationToken ct) =>
+{
+    var users = await db.Users.CountAsync(ct);
+    var wallets = await db.Wallets.CountAsync(ct);
+    var pro = await db.Users.CountAsync(u => u.IsPro, ct);
+    return Results.Json(new
+    {
+        users,
+        wallets,
+        pro,
+        updatedAt = DateTimeOffset.UtcNow,
+    });
+}).WithName("PublicStats");
 
 await app.RunAsync();
