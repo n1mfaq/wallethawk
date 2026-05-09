@@ -275,13 +275,15 @@ public sealed class UpdateHandler : IUpdateHandler
         }
 
         var s = await _admin.GetStatsAsync(ct);
+        var mrr = (s.Pro * 4.99m).ToString("0.00");
         var text =
-            "*WalletHawk \\— stats*\n" +
-            $"users: *{s.Users}* \\(\\+{s.NewUsers24h} in 24h\\)\n" +
+            "*WalletHawk — stats*\n\n" +
+            $"users: *{s.Users}* (+{s.NewUsers24h} in 24h)\n" +
             $"pro: *{s.Pro}*\n" +
-            $"wallets: *{s.Wallets}* \\(\\+{s.NewWallets24h} in 24h\\)\n" +
-            $"mrr: *${s.Pro * 4.99m:0.00}*";
-        await bot.SendMessage(msg.Chat.Id, text, parseMode: ParseMode.MarkdownV2, cancellationToken: ct);
+            $"wallets: *{s.Wallets}* (+{s.NewWallets24h} in 24h)\n" +
+            $"mrr: *${mrr}*";
+        // Plain text — admin output doesn't need rich formatting and avoids MarkdownV2 escaping headaches.
+        await bot.SendMessage(msg.Chat.Id, text, cancellationToken: ct);
     }
 
     private async Task CmdGrantPro(ITelegramBotClient bot, Message msg, string args, CancellationToken ct)
