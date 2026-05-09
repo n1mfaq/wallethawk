@@ -118,9 +118,21 @@ public sealed class WalletPoller : BackgroundService
         newOnes.Reverse();
         foreach (var tx in newOnes)
         {
-            var direction = string.Equals(tx.ToAddress, wallet.Address, StringComparison.OrdinalIgnoreCase) ? "in" : "out";
-            var arrow = direction == "in" ? "📥 IN" : "📤 OUT";
-            var counterparty = direction == "in" ? tx.FromAddress : tx.ToAddress;
+            var isIn = string.Equals(tx.ToAddress, wallet.Address, StringComparison.OrdinalIgnoreCase);
+            var arrow = isIn ? "📥 IN" : "📤 OUT";
+            var counterparty = isIn ? tx.FromAddress : tx.ToAddress;
+
+            // Persist the transaction (idempotent via unique (WalletId, TxHash) index).
+            db.Transactions.Add(new Transaction
+            {
+                WalletId = wallet.Id,
+                TxHash = tx.TxHash,
+                Direction = isIn ? TxDirection.In : TxDirection.Out,
+                Amount = tx.Amount,
+                TokenSymbol = tx.TokenSymbol,
+                Counterparty = counterparty,
+                BlockTime = tx.Timestamp,
+            });
 
             var label = string.IsNullOrEmpty(wallet.Label)
                 ? TronAddress.Mask(wallet.Address)
@@ -129,7 +141,7 @@ public sealed class WalletPoller : BackgroundService
             var text =
                 $"{arrow}  *{Esc(tx.Amount.ToString("0.######"))} {Esc(tx.TokenSymbol)}*\n" +
                 $"wallet: `{Esc(label)}`\n" +
-                $"{(direction == "in" ? "from" : "to")}: `{Esc(TronAddress.Mask(counterparty))}`\n" +
+                $"{(isIn ? "from" : "to")}: `{Esc(TronAddress.Mask(counterparty))}`\n" +
                 $"[tronscan](https://tronscan.org/#/transaction/{tx.TxHash})";
 
             try

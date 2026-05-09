@@ -12,4 +12,7 @@ public sealed class BotOptions
 
     /// <summary>Telegram username (without @) of the bot owner — for upgrade/contact link.</summary>
     public string OwnerUsername { get; set; } = "cwiwi9";
+
+    /// <summary>HTTPS URL of the Mini App (Telegram WebApp). Must be HTTPS and publicly reachable.</summary>
+    public string WebAppUrl { get; set; } = "https://n1mfaq.github.io/wallethawk/app/";
 }

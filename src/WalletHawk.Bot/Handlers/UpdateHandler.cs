@@ -18,6 +18,7 @@ public sealed class UpdateHandler : IUpdateHandler
     private readonly UserService _users;
     private readonly WalletService _wallets;
     private readonly PaymentService _payments;
+    private readonly AdminService _admin;
     private readonly BotOptions _opt;
     private readonly ILogger<UpdateHandler> _log;
 
@@ -25,12 +26,14 @@ public sealed class UpdateHandler : IUpdateHandler
         UserService users,
         WalletService wallets,
         PaymentService payments,
+        AdminService admin,
         IOptions<BotOptions> opt,
         ILogger<UpdateHandler> log)
     {
         _users = users;
         _wallets = wallets;
         _payments = payments;
+        _admin = admin;
         _opt = opt.Value;
         _log = log;
     }
@@ -62,6 +65,18 @@ public sealed class UpdateHandler : IUpdateHandler
                 case "/remove": await CmdRemove(bot, msg, user, args, ct); break;
                 case "/upgrade": await CmdUpgrade(bot, msg, ct); break;
                 case "/me": await CmdMe(bot, msg, user, ct); break;
+                case "/dashboard":
+                case "/app": await CmdDashboard(bot, msg, ct); break;
+
+                // ── admin only ──
+                case "/admin": await CmdAdmin(bot, msg, ct); break;
+                case "/stats": await CmdAdminStats(bot, msg, ct); break;
+                case "/grant_pro": await CmdGrantPro(bot, msg, args, ct); break;
+                case "/revoke_pro": await CmdRevokePro(bot, msg, args, ct); break;
+                case "/user": await CmdAdminUser(bot, msg, args, ct); break;
+                case "/wallets": await CmdAdminWallets(bot, msg, args, ct); break;
+                case "/broadcast": await CmdBroadcast(bot, msg, args, ct); break;
+
                 default:
                     await bot.SendMessage(msg.Chat.Id,
                         "Unknown command. Try /help.", cancellationToken: ct);
@@ -97,6 +112,7 @@ public sealed class UpdateHandler : IUpdateHandler
             "`/list` — show tracked wallets\n" +
             "`/remove <id>` — stop tracking\n" +
             "`/me` — your status\n" +
+            "`/dashboard` — open Mini App\n" +
             "`/upgrade` — go Pro\n" +
             "`/help` — show help";
         await bot.SendMessage(msg.Chat.Id, welcome, parseMode: ParseMode.MarkdownV2, cancellationToken: ct);
@@ -178,6 +194,25 @@ public sealed class UpdateHandler : IUpdateHandler
         await bot.SendMessage(msg.Chat.Id, text, parseMode: ParseMode.MarkdownV2, cancellationToken: ct);
     }
 
+    private async Task CmdDashboard(ITelegramBotClient bot, Message msg, CancellationToken ct)
+    {
+        if (string.IsNullOrEmpty(_opt.WebAppUrl))
+        {
+            await bot.SendMessage(msg.Chat.Id, "Dashboard is not configured yet.", cancellationToken: ct);
+            return;
+        }
+
+        var keyboard = new Telegram.Bot.Types.ReplyMarkups.InlineKeyboardMarkup(
+            Telegram.Bot.Types.ReplyMarkups.InlineKeyboardButton.WithWebApp(
+                "🦅 Open dashboard",
+                new Telegram.Bot.Types.WebAppInfo(_opt.WebAppUrl)));
+
+        await bot.SendMessage(msg.Chat.Id,
+            "Tap below to open your WalletHawk dashboard inside Telegram:",
+            replyMarkup: keyboard,
+            cancellationToken: ct);
+    }
+
     private async Task CmdUpgrade(ITelegramBotClient bot, Message msg, CancellationToken ct)
     {
         try
@@ -207,4 +242,215 @@ public sealed class UpdateHandler : IUpdateHandler
             await bot.SendMessage(msg.Chat.Id, fallback, parseMode: ParseMode.MarkdownV2, cancellationToken: ct);
         }
     }
-}
+
+    // ──────────────────────────────────────────────────────────────────────
+    //  Admin commands  —  visible only when msg.From.Username == BotOwner
+    // ──────────────────────────────────────────────────────────────────────
+
+    private bool RequireAdmin(Message msg) => _admin.IsAdmin(msg.From?.Username);
+
+    private async Task CmdAdmin(ITelegramBotClient bot, Message msg, CancellationToken ct)
+    {
+        if (!RequireAdmin(msg)) { await CmdHelp(bot, msg, ct); return; }
+
+        var help =
+            "*Admin commands*\n" +
+            "`/stats` — usage counters\n" +
+            "`/user <@username|tg_id>` — show user info\n" +
+            "`/wallets <@username|tg_id>` — list user's wallets\n" +
+            "`/grant_pro <@username|tg_id> [days=30]` — grant Pro\n" +
+            "`/revoke_pro <@username|tg_id>` — remove Pro\n" +
+            "`/broadcast <message>` — send message to ALL users";
+        await bot.SendMessage(msg.Chat.Id, help, parseMode: ParseMode.MarkdownV2, cancellationToken: ct);
+    }
+
+    private async Task CmdAdminStats(ITelegramBotClient bot, Message msg, CancellationToken ct)
+    {
+        if (!RequireAdmin(msg))
+        {
+            // Non-admins: redirect to /me-style summary
+            var me = await _users.GetOrCreateAsync(msg.From!.Id, msg.From.Username, msg.From.FirstName, ct);
+            await CmdMe(bot, msg, me, ct);
+            return;
+        }
+
+        var s = await _admin.GetStatsAsync(ct);
+        var text =
+            "*WalletHawk \\— stats*\n" +
+            $"users: *{s.Users}* \\(\\+{s.NewUsers24h} in 24h\\)\n" +
+            $"pro: *{s.Pro}*\n" +
+            $"wallets: *{s.Wallets}* \\(\\+{s.NewWallets24h} in 24h\\)\n" +
+            $"mrr: *${s.Pro * 4.99m:0.00}*";
+        await bot.SendMessage(msg.Chat.Id, text, parseMode: ParseMode.MarkdownV2, cancellationToken: ct);
+    }
+
+    private async Task CmdGrantPro(ITelegramBotClient bot, Message msg, string args, CancellationToken ct)
+    {
+        if (!RequireAdmin(msg)) return;
+
+        if (string.IsNullOrWhiteSpace(args))
+        {
+            await bot.SendMessage(msg.Chat.Id, "Usage: /grant_pro <@username|tg_id> [days=30]", cancellationToken: ct);
+            return;
+        }
+
+        var parts = args.Split(' ', 2, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        var who = parts[0];
+        var days = parts.Length > 1 && int.TryParse(parts[1], out var d) && d > 0 ? d : 30;
+
+        var user = await _admin.GrantProAsync(who, days, ct);
+        if (user is null)
+        {
+            await bot.SendMessage(msg.Chat.Id, $"User '{who}' not found.", cancellationToken: ct);
+            return;
+        }
+
+        await bot.SendMessage(msg.Chat.Id,
+            $"✅ Granted Pro to @{user.Username ?? user.TelegramUserId.ToString()} until {user.ProUntil:yyyy-MM-dd}",
+            cancellationToken: ct);
+
+        // Also notify the user themselves
+        try
+        {
+            await bot.SendMessage(user.TelegramUserId,
+                $"🎁 *WalletHawk Pro* has been granted to you for *{days} days*\\.\nEnjoy unlimited wallets 🦅",
+                parseMode: ParseMode.MarkdownV2, cancellationToken: ct);
+        }
+        catch (Exception ex)
+        {
+            _log.LogWarning(ex, "Failed to notify user {Id} about granted Pro", user.TelegramUserId);
+        }
+    }
+
+    private async Task CmdRevokePro(ITelegramBotClient bot, Message msg, string args, CancellationToken ct)
+    {
+        if (!RequireAdmin(msg)) return;
+
+        if (string.IsNullOrWhiteSpace(args))
+        {
+            await bot.SendMessage(msg.Chat.Id, "Usage: /revoke_pro <@username|tg_id>", cancellationToken: ct);
+            return;
+        }
+
+        var user = await _admin.RevokeProAsync(args.Trim(), ct);
+        if (user is null)
+        {
+            await bot.SendMessage(msg.Chat.Id, $"User '{args}' not found.", cancellationToken: ct);
+            return;
+        }
+
+        await bot.SendMessage(msg.Chat.Id,
+            $"🚫 Revoked Pro from @{user.Username ?? user.TelegramUserId.ToString()}",
+            cancellationToken: ct);
+    }
+
+    private async Task CmdAdminUser(ITelegramBotClient bot, Message msg, string args, CancellationToken ct)
+    {
+        if (!RequireAdmin(msg)) return;
+
+        if (string.IsNullOrWhiteSpace(args))
+        {
+            await bot.SendMessage(msg.Chat.Id, "Usage: /user <@username|tg_id>", cancellationToken: ct);
+            return;
+        }
+
+        var u = await _admin.FindUserAsync(args.Trim(), ct);
+        if (u is null)
+        {
+            await bot.SendMessage(msg.Chat.Id, $"User '{args}' not found.", cancellationToken: ct);
+            return;
+        }
+
+        var walletCount = await _wallets.CountAsync(u.Id, ct);
+        var plan = u.IsPro
+            ? $"Pro until {u.ProUntil:yyyy-MM-dd}"
+            : "Free";
+
+        var text =
+            $"*User #{u.Id}*\n" +
+            $"tg id: `{u.TelegramUserId}`\n" +
+            $"username: `@{u.Username ?? "—"}`\n" +
+            $"name: `{Esc(u.FirstName ?? "—")}`\n" +
+            $"plan: *{Esc(plan)}*\n" +
+            $"wallets: {walletCount}\n" +
+            $"joined: {u.CreatedAt:yyyy-MM-dd}";
+        await bot.SendMessage(msg.Chat.Id, text, parseMode: ParseMode.MarkdownV2, cancellationToken: ct);
+    }
+
+    private async Task CmdAdminWallets(ITelegramBotClient bot, Message msg, string args, CancellationToken ct)
+    {
+        if (!RequireAdmin(msg)) return;
+
+        if (string.IsNullOrWhiteSpace(args))
+        {
+            await bot.SendMessage(msg.Chat.Id, "Usage: /wallets <@username|tg_id>", cancellationToken: ct);
+            return;
+        }
+
+        var u = await _admin.FindUserAsync(args.Trim(), ct);
+        if (u is null)
+        {
+            await bot.SendMessage(msg.Chat.Id, $"User '{args}' not found.", cancellationToken: ct);
+            return;
+        }
+
+        var ws = await _admin.GetWalletsAsync(u.Id, ct);
+        if (ws.Count == 0)
+        {
+            await bot.SendMessage(msg.Chat.Id, $"@{u.Username ?? u.TelegramUserId.ToString()} has no wallets.", cancellationToken: ct);
+            return;
+        }
+
+        var lines = ws.Select(w =>
+            $"`{w.Id}` · `{Esc(TronAddress.Mask(w.Address))}`{(string.IsNullOrEmpty(w.Label) ? "" : $" — {Esc(w.Label)}")}");
+        var text = $"*Wallets of @{Esc(u.Username ?? u.TelegramUserId.ToString())}:*\n" + string.Join('\n', lines);
+        await bot.SendMessage(msg.Chat.Id, text, parseMode: ParseMode.MarkdownV2, cancellationToken: ct);
+    }
+
+    private async Task CmdBroadcast(ITelegramBotClient bot, Message msg, string args, CancellationToken ct)
+    {
+        if (!RequireAdmin(msg)) return;
+
+        if (string.IsNullOrWhiteSpace(args))
+        {
+            await bot.SendMessage(msg.Chat.Id, "Usage: /broadcast <message>", cancellationToken: ct);
+            return;
+        }
+
+        var ids = await _admin.GetAllTelegramIdsAsync(ct);
+        var ok = 0;
+        var failed = 0;
+
+        foreach (var id in ids)
+        {
+            try
+            {
+                await bot.SendMessage(id, args, cancellationToken: ct);
+                ok++;
+                // Telegram rate limit: max ~30 msg/s overall, keep it slow.
+                await Task.Delay(50, ct);
+            }
+            catch (Exception ex)
+            {
+                failed++;
+                _log.LogWarning(ex, "Broadcast failed for user {Id}", id);
+            }
+        }
+
+        await bot.SendMessage(msg.Chat.Id,
+            $"📢 Broadcast done: {ok} delivered, {failed} failed (out of {ids.Count}).",
+            cancellationToken: ct);
+    }
+
+    /// <summary>Escape MarkdownV2 reserved chars.</summary>
+    private static string Esc(string s)
+    {
+        ReadOnlySpan<char> reserved = "_*[]()~`>#+-=|{}.!";
+        var sb = new System.Text.StringBuilder(s.Length);
+        foreach (var c in s)
+        {
+            if (reserved.IndexOf(c) >= 0) sb.Append('\\');
+            sb.Append(c);
+        }
+        return sb.ToString();
+    }}

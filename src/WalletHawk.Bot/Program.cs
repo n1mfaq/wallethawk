@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Telegram.Bot;
 using WalletHawk.Bot;
 using WalletHawk.Bot.Handlers;
+using WalletHawk.Bot.MiniApp;
 using WalletHawk.Bot.Options;
 using WalletHawk.Bot.Payments;
 using WalletHawk.Bot.Services;
@@ -33,6 +34,7 @@ builder.Services.AddScoped<UpdateHandler>();
 builder.Services.AddScoped<UserService>();
 builder.Services.AddScoped<WalletService>();
 builder.Services.AddScoped<PaymentService>();
+builder.Services.AddScoped<AdminService>();
 
 builder.Services.AddSingleton<INotifier, TelegramNotifier>();
 builder.Services.AddHostedService<BotHostedService>();
@@ -76,5 +78,7 @@ app.MapGet("/stats", async (AppDbContext db, CancellationToken ct) =>
         updatedAt = DateTimeOffset.UtcNow,
     });
 }).WithName("PublicStats");
+
+app.MapMiniApp();
 
 await app.RunAsync();
