@@ -8,7 +8,7 @@ public sealed class BotOptions
     public string Token { get; set; } = string.Empty;
 
     /// <summary>Free plan: how many wallets a user can add without paying.</summary>
-    public int FreeWalletLimit { get; set; } = 1;
+    public int FreeWalletLimit { get; set; } = 2;
 
     /// <summary>Telegram username (without @) of the bot owner — for upgrade/contact link.</summary>
     public string OwnerUsername { get; set; } = "cwiwi9";
