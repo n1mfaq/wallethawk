@@ -49,13 +49,21 @@ public sealed class AdminService
     public async Task<User?> GrantProAsync(string usernameOrId, int days, CancellationToken ct = default)
     {
         var user = await FindUserAsync(usernameOrId, ct);
-        if (user is null) return null;
+        return user is null ? null : await GrantProCoreAsync(user, days, ct);
+    }
 
+    public async Task<User?> GrantProByIdAsync(long internalUserId, int days, CancellationToken ct = default)
+    {
+        var user = await _db.Users.FirstOrDefaultAsync(u => u.Id == internalUserId, ct);
+        return user is null ? null : await GrantProCoreAsync(user, days, ct);
+    }
+
+    private async Task<User> GrantProCoreAsync(User user, int days, CancellationToken ct)
+    {
         var now = DateTimeOffset.UtcNow;
         var current = user.ProUntil is { } u && u > now ? u : now;
         user.ProUntil = current.AddDays(days);
         user.IsPro = true;
-
         await _db.SaveChangesAsync(ct);
         return user;
     }
@@ -63,8 +71,17 @@ public sealed class AdminService
     public async Task<User?> RevokeProAsync(string usernameOrId, CancellationToken ct = default)
     {
         var user = await FindUserAsync(usernameOrId, ct);
-        if (user is null) return null;
+        return user is null ? null : await RevokeProCoreAsync(user, ct);
+    }
 
+    public async Task<User?> RevokeProByIdAsync(long internalUserId, CancellationToken ct = default)
+    {
+        var user = await _db.Users.FirstOrDefaultAsync(u => u.Id == internalUserId, ct);
+        return user is null ? null : await RevokeProCoreAsync(user, ct);
+    }
+
+    private async Task<User> RevokeProCoreAsync(User user, CancellationToken ct)
+    {
         user.IsPro = false;
         user.ProUntil = null;
         await _db.SaveChangesAsync(ct);

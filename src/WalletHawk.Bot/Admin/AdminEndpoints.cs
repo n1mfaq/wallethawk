@@ -151,7 +151,7 @@ public static class AdminEndpoints
 
         var days = int.TryParse(ctx.Request.Query["days"], out var d) && d > 0 ? d : 30;
 
-        var user = await admin.GrantProAsync(id.ToString(), days, ct);
+        var user = await admin.GrantProByIdAsync(id, days, ct);
         if (user is null) return Results.NotFound();
 
         // Best-effort notification
@@ -178,7 +178,7 @@ public static class AdminEndpoints
         var err = AuthOrFail(ctx, cfg, admin, opt);
         if (err is not null) return err;
 
-        var user = await admin.RevokeProAsync(id.ToString(), ct);
+        var user = await admin.RevokeProByIdAsync(id, ct);
         if (user is null) return Results.NotFound();
         return Results.Json(new { ok = true, isPro = user.IsPro });
     }
