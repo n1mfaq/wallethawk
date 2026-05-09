@@ -3,13 +3,14 @@ using Telegram.Bot;
 using WalletHawk.Bot;
 using WalletHawk.Bot.Handlers;
 using WalletHawk.Bot.Options;
+using WalletHawk.Bot.Payments;
 using WalletHawk.Bot.Services;
 using WalletHawk.Data;
 using WalletHawk.Domain.Abstractions;
 using WalletHawk.Infrastructure;
 using WalletHawk.Infrastructure.Telegram;
 
-var builder = Host.CreateApplicationBuilder(args);
+var builder = WebApplication.CreateBuilder(args);
 
 builder.Configuration.AddEnvironmentVariables();
 
@@ -31,16 +32,23 @@ builder.Services.AddSingleton<ITelegramBotClient>(_ =>
 builder.Services.AddScoped<UpdateHandler>();
 builder.Services.AddScoped<UserService>();
 builder.Services.AddScoped<WalletService>();
+builder.Services.AddScoped<PaymentService>();
 
 builder.Services.AddSingleton<INotifier, TelegramNotifier>();
 builder.Services.AddHostedService<BotHostedService>();
 
-var host = builder.Build();
+builder.Services.AddHealthChecks();
 
-using (var scope = host.Services.CreateScope())
+var app = builder.Build();
+
+using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     await db.Database.MigrateAsync();
 }
 
-await host.RunAsync();
+app.MapHealthChecks("/healthz");
+app.MapGet("/", () => Results.Text("WalletHawk bot is alive 🦅"));
+app.MapPost("/webhooks/cryptobot", CryptoBotWebhook.HandleAsync);
+
+await app.RunAsync();

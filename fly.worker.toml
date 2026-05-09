@@ -1,0 +1,25 @@
+# Fly.io deployment config — Worker
+# Deploy: fly deploy --config fly.worker.toml --dockerfile src/WalletHawk.Worker/Dockerfile
+
+app = "wallethawk-worker"
+primary_region = "fra"
+kill_signal = "SIGINT"
+kill_timeout = "5s"
+
+[build]
+  dockerfile = "src/WalletHawk.Worker/Dockerfile"
+
+[env]
+  ASPNETCORE_ENVIRONMENT = "Production"
+  DOTNET_RUNNING_IN_CONTAINER = "true"
+
+# Worker has no HTTP — no http_service block.
+# Single machine is enough for low scale.
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "256mb"
+  cpu_kind = "shared"
+  cpus = 1
+
+[deploy]
+  strategy = "immediate"

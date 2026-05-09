@@ -70,14 +70,41 @@ export Bot__Token="123:abc..."
 | `/me` | Show plan + counters |
 | `/upgrade` | Pro plan info |
 
+## Production deploy (Fly.io · free tier)
+
+```bash
+# one-time setup
+fly auth login
+fly apps create wallethawk-bot
+fly apps create wallethawk-worker
+fly postgres create --name wallethawk-db --region fra
+fly postgres attach wallethawk-db --app wallethawk-bot
+fly postgres attach wallethawk-db --app wallethawk-worker
+
+# secrets (do this for both apps)
+fly secrets set --app wallethawk-bot Bot__Token="123:abc..." \
+                                     TronGrid__ApiKey="..." \
+                                     CryptoBot__ApiKey="..."
+fly secrets set --app wallethawk-worker Bot__Token="123:abc..." \
+                                        TronGrid__ApiKey="..."
+
+# deploy
+./scripts/deploy.sh
+```
+
+After bot is live, set the CryptoBot webhook in [@CryptoBot](https://t.me/CryptoBot) → Crypto Pay → Apps → your app → Webhooks:
+```
+https://wallethawk-bot.fly.dev/webhooks/cryptobot
+```
+
 ## Roadmap
 
 - [x] TRC20-USDT tracking
+- [x] CryptoBot Pay integration (Pro plan)
 - [ ] Multi-token (TRX native, JST, WIN, etc.)
 - [ ] BTC + EVM (BSC, Ethereum, Polygon)
 - [ ] PnL tracking with cost basis
 - [ ] Web dashboard
-- [ ] Telegram Stars / CryptoBot Pay integration
 
 ## License
 

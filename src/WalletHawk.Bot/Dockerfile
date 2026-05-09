@@ -2,7 +2,7 @@
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 
-COPY WalletHawk.sln ./
+COPY WalletHawk.slnx ./
 COPY src/WalletHawk.Domain/*.csproj src/WalletHawk.Domain/
 COPY src/WalletHawk.Data/*.csproj src/WalletHawk.Data/
 COPY src/WalletHawk.Infrastructure/*.csproj src/WalletHawk.Infrastructure/

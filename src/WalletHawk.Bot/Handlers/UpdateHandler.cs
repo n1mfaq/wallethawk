@@ -5,6 +5,7 @@ using Telegram.Bot.Polling;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
 using WalletHawk.Bot.Options;
+using WalletHawk.Bot.Payments;
 using WalletHawk.Bot.Services;
 using WalletHawk.Domain.Services;
 using DomainUser = WalletHawk.Domain.Entities.User;
@@ -16,17 +17,20 @@ public sealed class UpdateHandler : IUpdateHandler
 {
     private readonly UserService _users;
     private readonly WalletService _wallets;
+    private readonly PaymentService _payments;
     private readonly BotOptions _opt;
     private readonly ILogger<UpdateHandler> _log;
 
     public UpdateHandler(
         UserService users,
         WalletService wallets,
+        PaymentService payments,
         IOptions<BotOptions> opt,
         ILogger<UpdateHandler> log)
     {
         _users = users;
         _wallets = wallets;
+        _payments = payments;
         _opt = opt.Value;
         _log = log;
     }
@@ -176,12 +180,31 @@ public sealed class UpdateHandler : IUpdateHandler
 
     private async Task CmdUpgrade(ITelegramBotClient bot, Message msg, CancellationToken ct)
     {
-        var text =
-            "*WalletHawk Pro* — $4\\.99/mo\n\n" +
-            "• unlimited wallets\n" +
-            "• instant alerts \\(every 30s\\)\n" +
-            "• priority support\n\n" +
-            $"DM @{_opt.OwnerUsername} to activate\\.";
-        await bot.SendMessage(msg.Chat.Id, text, parseMode: ParseMode.MarkdownV2, cancellationToken: ct);
+        try
+        {
+            var invoice = await _payments.CreateProInvoiceAsync(msg.From!.Id, ct);
+
+            var text =
+                "*WalletHawk Pro*\n\n" +
+                "• unlimited wallets\n" +
+                "• instant alerts \\(every 30s\\)\n" +
+                "• priority support\n\n" +
+                $"Pay *4\\.99 USDT* and Pro activates automatically:\n[👉 pay]({invoice.PayUrl})";
+
+            await bot.SendMessage(msg.Chat.Id, text, parseMode: ParseMode.MarkdownV2,
+                linkPreviewOptions: new Telegram.Bot.Types.LinkPreviewOptions { IsDisabled = true },
+                cancellationToken: ct);
+        }
+        catch (Exception ex)
+        {
+            _log.LogError(ex, "CryptoBot invoice creation failed");
+            // Fallback: show contact
+            var fallback =
+                "*WalletHawk Pro* — $4\\.99/mo\n\n" +
+                "• unlimited wallets\n" +
+                "• instant alerts\n\n" +
+                $"DM @{_opt.OwnerUsername} to activate manually\\.";
+            await bot.SendMessage(msg.Chat.Id, fallback, parseMode: ParseMode.MarkdownV2, cancellationToken: ct);
+        }
     }
 }

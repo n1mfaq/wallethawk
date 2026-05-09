@@ -31,6 +31,9 @@ services:
       Bot__Token: "${BOT_TOKEN}"
       Bot__OwnerUsername: "${BOT_OWNER:-cwiwi9}"
       TronGrid__ApiKey: "${TRONGRID_API_KEY:-}"
+      CryptoBot__ApiKey: "${CRYPTOBOT_API_KEY:-}"
+    ports:
+      - "8080:8080"
 
   worker:
     build:
