@@ -13,6 +13,12 @@ public sealed class BotOptions
     /// <summary>Telegram username (without @) of the bot owner — for upgrade/contact link.</summary>
     public string OwnerUsername { get; set; } = "cwiwi9";
 
+    /// <summary>
+    /// Telegram numeric user id of the bot owner — used for admin authorization.
+    /// Doesn't change if the user changes/removes their username, so it's safer than OwnerUsername.
+    /// </summary>
+    public long OwnerTelegramId { get; set; } = 6717364079;
+
     /// <summary>HTTPS URL of the Mini App (Telegram WebApp). Must be HTTPS and publicly reachable.</summary>
     public string WebAppUrl { get; set; } = "https://n1mfaq.github.io/wallethawk/app/";
 }

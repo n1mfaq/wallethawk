@@ -17,9 +17,9 @@ public sealed class AdminService
         _opt = opt.Value;
     }
 
-    public bool IsAdmin(string? username) =>
-        !string.IsNullOrEmpty(username)
-        && string.Equals(username, _opt.OwnerUsername, StringComparison.OrdinalIgnoreCase);
+    /// <summary>Authorize by numeric Telegram user id — username can change/be released.</summary>
+    public bool IsAdmin(long telegramUserId) =>
+        _opt.OwnerTelegramId != 0 && telegramUserId == _opt.OwnerTelegramId;
 
     public async Task<AdminStats> GetStatsAsync(CancellationToken ct = default)
     {

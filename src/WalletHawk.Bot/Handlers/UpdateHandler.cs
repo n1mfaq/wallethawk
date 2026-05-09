@@ -247,21 +247,27 @@ public sealed class UpdateHandler : IUpdateHandler
     //  Admin commands  —  visible only when msg.From.Username == BotOwner
     // ──────────────────────────────────────────────────────────────────────
 
-    private bool RequireAdmin(Message msg) => _admin.IsAdmin(msg.From?.Username);
+    private bool RequireAdmin(Message msg) => msg.From is { } u && _admin.IsAdmin(u.Id);
+
+    private static string EscHtml(string? s) =>
+        string.IsNullOrEmpty(s) ? "" :
+        s.Replace("&", "&amp;").Replace("<", "&lt;").Replace(">", "&gt;");
 
     private async Task CmdAdmin(ITelegramBotClient bot, Message msg, CancellationToken ct)
     {
         if (!RequireAdmin(msg)) { await CmdHelp(bot, msg, ct); return; }
 
         var help =
-            "*Admin commands*\n" +
-            "`/stats` — usage counters\n" +
-            "`/user <@username|tg_id>` — show user info\n" +
-            "`/wallets <@username|tg_id>` — list user's wallets\n" +
-            "`/grant_pro <@username|tg_id> [days=30]` — grant Pro\n" +
-            "`/revoke_pro <@username|tg_id>` — remove Pro\n" +
-            "`/broadcast <message>` — send message to ALL users";
-        await bot.SendMessage(msg.Chat.Id, help, parseMode: ParseMode.MarkdownV2, cancellationToken: ct);
+            "🔑 <b>Admin commands</b>\n" +
+            "<pre>" +
+            "/stats                       usage counters\n" +
+            "/user @name | id             user info\n" +
+            "/wallets @name | id          user's wallets\n" +
+            "/grant_pro @name [days=30]   grant Pro\n" +
+            "/revoke_pro @name            remove Pro\n" +
+            "/broadcast &lt;message&gt;         send to ALL users" +
+            "</pre>";
+        await bot.SendMessage(msg.Chat.Id, help, parseMode: ParseMode.Html, cancellationToken: ct);
     }
 
     private async Task CmdAdminStats(ITelegramBotClient bot, Message msg, CancellationToken ct)
@@ -277,14 +283,13 @@ public sealed class UpdateHandler : IUpdateHandler
         var s = await _admin.GetStatsAsync(ct);
         var mrr = (s.Pro * 4.99m).ToString("0.00");
 
-        // HTML <pre> = monospace block, columns line up nicely in any client.
         var text =
             "📊 <b>WalletHawk stats</b>\n" +
             "<pre>" +
-            $"users    │ {s.Users,4}   (+{s.NewUsers24h} in 24h)\n" +
-            $"pro      │ {s.Pro,4}\n" +
-            $"wallets  │ {s.Wallets,4}   (+{s.NewWallets24h} in 24h)\n" +
-            $"mrr      │ ${mrr}" +
+            $"users     {s.Users}  (+{s.NewUsers24h} in 24h)\n" +
+            $"pro       {s.Pro}\n" +
+            $"wallets   {s.Wallets}  (+{s.NewWallets24h} in 24h)\n" +
+            $"mrr       ${mrr}" +
             "</pre>";
         await bot.SendMessage(msg.Chat.Id, text, parseMode: ParseMode.Html, cancellationToken: ct);
     }
@@ -318,8 +323,8 @@ public sealed class UpdateHandler : IUpdateHandler
         try
         {
             await bot.SendMessage(user.TelegramUserId,
-                $"🎁 *WalletHawk Pro* has been granted to you for *{days} days*\\.\nEnjoy unlimited wallets 🦅",
-                parseMode: ParseMode.MarkdownV2, cancellationToken: ct);
+                $"🎁 <b>WalletHawk Pro</b> has been granted to you for <b>{days} days</b>.\nEnjoy unlimited wallets 🦅",
+                parseMode: ParseMode.Html, cancellationToken: ct);
         }
         catch (Exception ex)
         {
@@ -367,19 +372,19 @@ public sealed class UpdateHandler : IUpdateHandler
         }
 
         var walletCount = await _wallets.CountAsync(u.Id, ct);
-        var plan = u.IsPro
-            ? $"Pro until {u.ProUntil:yyyy-MM-dd}"
-            : "Free";
+        var plan = u.IsPro ? $"Pro until {u.ProUntil:yyyy-MM-dd}" : "Free";
 
         var text =
-            $"*User #{u.Id}*\n" +
-            $"tg id: `{u.TelegramUserId}`\n" +
-            $"username: `@{u.Username ?? "—"}`\n" +
-            $"name: `{Esc(u.FirstName ?? "—")}`\n" +
-            $"plan: *{Esc(plan)}*\n" +
-            $"wallets: {walletCount}\n" +
-            $"joined: {u.CreatedAt:yyyy-MM-dd}";
-        await bot.SendMessage(msg.Chat.Id, text, parseMode: ParseMode.MarkdownV2, cancellationToken: ct);
+            $"👤 <b>User #{u.Id}</b>\n" +
+            "<pre>" +
+            $"tg id     {u.TelegramUserId}\n" +
+            $"username  @{EscHtml(u.Username) ?? "—"}\n" +
+            $"name      {EscHtml(u.FirstName) ?? "—"}\n" +
+            $"plan      {EscHtml(plan)}\n" +
+            $"wallets   {walletCount}\n" +
+            $"joined    {u.CreatedAt:yyyy-MM-dd}" +
+            "</pre>";
+        await bot.SendMessage(msg.Chat.Id, text, parseMode: ParseMode.Html, cancellationToken: ct);
     }
 
     private async Task CmdAdminWallets(ITelegramBotClient bot, Message msg, string args, CancellationToken ct)
@@ -406,10 +411,16 @@ public sealed class UpdateHandler : IUpdateHandler
             return;
         }
 
+        var handle = u.Username ?? u.TelegramUserId.ToString();
         var lines = ws.Select(w =>
-            $"`{w.Id}` · `{Esc(TronAddress.Mask(w.Address))}`{(string.IsNullOrEmpty(w.Label) ? "" : $" — {Esc(w.Label)}")}");
-        var text = $"*Wallets of @{Esc(u.Username ?? u.TelegramUserId.ToString())}:*\n" + string.Join('\n', lines);
-        await bot.SendMessage(msg.Chat.Id, text, parseMode: ParseMode.MarkdownV2, cancellationToken: ct);
+        {
+            var label = string.IsNullOrEmpty(w.Label) ? "" : $"  —  {EscHtml(w.Label)}";
+            return $"#{w.Id,-3} {EscHtml(TronAddress.Mask(w.Address))}{label}";
+        });
+        var text =
+            $"👛 <b>Wallets of @{EscHtml(handle)}</b>\n" +
+            "<pre>" + string.Join('\n', lines) + "</pre>";
+        await bot.SendMessage(msg.Chat.Id, text, parseMode: ParseMode.Html, cancellationToken: ct);
     }
 
     private async Task CmdBroadcast(ITelegramBotClient bot, Message msg, string args, CancellationToken ct)
