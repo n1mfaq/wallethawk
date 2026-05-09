@@ -25,17 +25,25 @@ public sealed class CryptoBotClient : IPaymentProvider
         }
     }
 
-    public async Task<PaymentInvoice> CreateInvoiceAsync(long telegramUserId, string description, CancellationToken ct = default)
+    public async Task<PaymentInvoice> CreateInvoiceAsync(
+        long telegramUserId,
+        decimal amount,
+        string description,
+        string planTag,
+        CancellationToken ct = default)
     {
         if (string.IsNullOrWhiteSpace(_opt.ApiKey))
             throw new InvalidOperationException("CryptoBot API key is not configured");
 
+        // Encode plan tag into the provider's payload so the webhook knows which plan was paid for.
+        var encodedPayload = $"{telegramUserId}:{planTag}";
+
         var payload = new
         {
             asset = "USDT",
-            amount = _opt.ProPriceUsdt.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture),
+            amount = amount.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture),
             description = description,
-            payload = telegramUserId.ToString(),
+            payload = encodedPayload,
             allow_anonymous = false,
             allow_comments = false,
         };

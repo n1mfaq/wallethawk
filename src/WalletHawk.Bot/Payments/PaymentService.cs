@@ -19,17 +19,35 @@ public sealed class PaymentService
         _opt = opt.Value;
     }
 
-    public Task<PaymentInvoice> CreateProInvoiceAsync(long telegramUserId, CancellationToken ct = default) =>
-        _provider.CreateInvoiceAsync(telegramUserId, $"WalletHawk Pro · {_opt.ProDurationDays} days", ct);
+    public Task<PaymentInvoice> CreateMonthlyInvoiceAsync(long telegramUserId, CancellationToken ct = default) =>
+        _provider.CreateInvoiceAsync(
+            telegramUserId,
+            _opt.ProMonthlyPriceUsdt,
+            $"WalletHawk Pro · {_opt.ProMonthlyDurationDays} days",
+            "monthly",
+            ct);
 
-    public async Task<bool> ActivateProAsync(long telegramUserId, CancellationToken ct = default)
+    public Task<PaymentInvoice> CreateYearlyInvoiceAsync(long telegramUserId, CancellationToken ct = default) =>
+        _provider.CreateInvoiceAsync(
+            telegramUserId,
+            _opt.ProYearlyPriceUsdt,
+            $"WalletHawk Pro · {_opt.ProYearlyDurationDays} days",
+            "yearly",
+            ct);
+
+    /// <summary>Activate Pro after a successful payment, extending an existing subscription if any.</summary>
+    public async Task<bool> ActivateProAsync(long telegramUserId, string planTag, CancellationToken ct = default)
     {
         var user = await _db.Users.FirstOrDefaultAsync(u => u.TelegramUserId == telegramUserId, ct);
         if (user is null) return false;
 
+        var days = string.Equals(planTag, "yearly", StringComparison.OrdinalIgnoreCase)
+            ? _opt.ProYearlyDurationDays
+            : _opt.ProMonthlyDurationDays;
+
         var now = DateTimeOffset.UtcNow;
         var current = user.ProUntil is { } u && u > now ? u : now;
-        user.ProUntil = current.AddDays(_opt.ProDurationDays);
+        user.ProUntil = current.AddDays(days);
         user.IsPro = true;
 
         await _db.SaveChangesAsync(ct);

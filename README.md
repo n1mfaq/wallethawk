@@ -21,7 +21,7 @@ Live:
 1. User opens [@wallethawk_bot](https://t.me/wallethawk_bot) in Telegram, runs `/add <TRC20_address> [label]`.
 2. The **worker** polls TronGrid every 30 seconds for each tracked wallet, diffs new TRC20 transfers against `Wallet.LastTxHash`, and persists them into the `transactions` table.
 3. The **bot** sends an instant Telegram alert (`📥 IN 500 USDT · from TXyz…aBcDef`) with a one-click TronScan link.
-4. Free plan: 1 wallet. Pro plan ($4.99/mo via [@CryptoBot](https://t.me/CryptoBot)): unlimited wallets.
+4. Free plan: 2 wallets. Pro plan ($9.99/mo or $79.99/year via [@CryptoBot](https://t.me/CryptoBot)): unlimited wallets.
 5. Mini App dashboard inside Telegram: KPI block, 7-day in/out chart, wallet list, recent transactions.
 
 ```

@@ -37,21 +37,24 @@ public static class CryptoBotWebhook
             if (updateType != "invoice_paid") return Results.Ok();
 
             var payload = root.GetProperty("payload");
-            // CryptoBot returns the original invoice; user id was stored in `payload`
-            var userIdStr = payload.GetProperty("payload").GetString();
-            if (!long.TryParse(userIdStr, out var telegramUserId))
+            // We encoded the payload as "<telegramUserId>:<planTag>". Older invoices may have the
+            // bare userId — fall back to "monthly" in that case.
+            var rawPayload = payload.GetProperty("payload").GetString() ?? "";
+            var parts = rawPayload.Split(':', 2);
+            if (parts.Length == 0 || !long.TryParse(parts[0], out var telegramUserId))
             {
-                log.LogWarning("Invalid payload in CryptoBot webhook: {Payload}", userIdStr);
+                log.LogWarning("Invalid payload in CryptoBot webhook: {Payload}", rawPayload);
                 return Results.Ok();
             }
+            var planTag = parts.Length > 1 && !string.IsNullOrWhiteSpace(parts[1]) ? parts[1] : "monthly";
 
-            var ok = await payments.ActivateProAsync(telegramUserId, ct);
+            var ok = await payments.ActivateProAsync(telegramUserId, planTag, ct);
             if (ok)
             {
                 await notifier.NotifyAsync(telegramUserId,
                     "✅ *Payment received*\\. WalletHawk *Pro* is active 🦅",
                     ct);
-                log.LogInformation("Activated Pro for user {UserId}", telegramUserId);
+                log.LogInformation("Activated Pro ({Plan}) for user {UserId}", planTag, telegramUserId);
             }
         }
         catch (Exception ex)

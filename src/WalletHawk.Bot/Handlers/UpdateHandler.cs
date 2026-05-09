@@ -217,16 +217,34 @@ public sealed class UpdateHandler : IUpdateHandler
     {
         try
         {
-            var invoice = await _payments.CreateProInvoiceAsync(msg.From!.Id, ct);
+            var monthly = await _payments.CreateMonthlyInvoiceAsync(msg.From!.Id, ct);
+            var yearly = await _payments.CreateYearlyInvoiceAsync(msg.From!.Id, ct);
 
             var text =
-                "*WalletHawk Pro*\n\n" +
+                "🦅 <b>WalletHawk Pro</b>\n\n" +
                 "• unlimited wallets\n" +
-                "• instant alerts \\(every 30s\\)\n" +
+                "• instant alerts (every 30s)\n" +
                 "• priority support\n\n" +
-                $"Pay *4\\.99 USDT* and Pro activates automatically:\n[👉 pay]({invoice.PayUrl})";
+                "Choose your plan — paid in USDT TRC20 via @CryptoBot.\n" +
+                "Pro activates automatically after payment.";
 
-            await bot.SendMessage(msg.Chat.Id, text, parseMode: ParseMode.MarkdownV2,
+            var keyboard = new Telegram.Bot.Types.ReplyMarkups.InlineKeyboardMarkup(new[]
+            {
+                new[]
+                {
+                    Telegram.Bot.Types.ReplyMarkups.InlineKeyboardButton.WithUrl(
+                        "💳 Monthly · 9.99 USDT", monthly.PayUrl),
+                },
+                new[]
+                {
+                    Telegram.Bot.Types.ReplyMarkups.InlineKeyboardButton.WithUrl(
+                        "⭐ Yearly · 79.99 USDT (save 33%)", yearly.PayUrl),
+                },
+            });
+
+            await bot.SendMessage(msg.Chat.Id, text,
+                parseMode: ParseMode.Html,
+                replyMarkup: keyboard,
                 linkPreviewOptions: new Telegram.Bot.Types.LinkPreviewOptions { IsDisabled = true },
                 cancellationToken: ct);
         }
@@ -235,11 +253,11 @@ public sealed class UpdateHandler : IUpdateHandler
             _log.LogError(ex, "CryptoBot invoice creation failed");
             // Fallback: show contact
             var fallback =
-                "*WalletHawk Pro* — $4\\.99/mo\n\n" +
+                $"<b>WalletHawk Pro</b> — from $9.99/mo\n\n" +
                 "• unlimited wallets\n" +
                 "• instant alerts\n\n" +
-                $"DM @{_opt.OwnerUsername} to activate manually\\.";
-            await bot.SendMessage(msg.Chat.Id, fallback, parseMode: ParseMode.MarkdownV2, cancellationToken: ct);
+                $"DM @{EscHtml(_opt.OwnerUsername)} to activate manually.";
+            await bot.SendMessage(msg.Chat.Id, fallback, parseMode: ParseMode.Html, cancellationToken: ct);
         }
     }
 
