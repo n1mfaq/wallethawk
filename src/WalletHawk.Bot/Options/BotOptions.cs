@@ -21,4 +21,13 @@ public sealed class BotOptions
 
     /// <summary>HTTPS URL of the Mini App (Telegram WebApp). Must be HTTPS and publicly reachable.</summary>
     public string WebAppUrl { get; set; } = "https://n1mfaq.github.io/wallethawk/app/";
+
+    /// <summary>HTTPS URL of the admin panel (served by this bot). Used by /panel command.</summary>
+    public string AdminWebAppUrl { get; set; } = "https://wallethawk-bot.fly.dev/admin/";
+
+    /// <summary>
+    /// Optional shared secret for accessing /admin/ from a regular browser (without Telegram).
+    /// Pass via X-Admin-Token header or ?token=… query string.
+    /// </summary>
+    public string AdminToken { get; set; } = "";
 }

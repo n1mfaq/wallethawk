@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>WalletHawk · Admin</title>
+    <meta name="robots" content="noindex,nofollow" />
+
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='80' font-size='80'%3E🦅%3C/text%3E%3C/svg%3E" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="admin.css" />
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+</head>
+<body>
+    <div class="bg-grid" aria-hidden="true"></div>
+    <div class="bg-glow g1" aria-hidden="true"></div>
+    <div class="bg-glow g2" aria-hidden="true"></div>
+
+    <header class="head">
+        <span class="logo">🦅 <b>WalletHawk</b> · admin</span>
+        <span class="auth" id="auth-state">checking…</span>
+    </header>
+
+    <main>
+        <!-- Overview KPIs -->
+        <section class="kpi" id="kpi" aria-label="overview">
+            <div><b data-kpi="users">—</b><span>users</span></div>
+            <div><b data-kpi="pro">—</b><span>pro</span></div>
+            <div><b data-kpi="wallets">—</b><span>wallets</span></div>
+            <div><b data-kpi="totalTx">—</b><span>tx tracked</span></div>
+            <div><b data-kpi="mrr">—</b><span>MRR (USD)</span></div>
+            <div>
+                <b><span data-kpi="newUsers24h">—</span> / <span data-kpi="newWallets24h">—</span></b>
+                <span>new u/w (24h)</span>
+            </div>
+        </section>
+
+        <!-- Charts -->
+        <section class="charts">
+            <div class="chart-card">
+                <h3>New users · 30d</h3>
+                <svg id="chart-users" viewBox="0 0 600 120" preserveAspectRatio="none"></svg>
+            </div>
+            <div class="chart-card">
+                <h3>Transactions tracked · 30d</h3>
+                <svg id="chart-tx" viewBox="0 0 600 120" preserveAspectRatio="none"></svg>
+            </div>
+        </section>
+
+        <!-- Broadcast -->
+        <section class="block">
+            <h2><span class="b">[</span> broadcast <span class="b">]</span></h2>
+            <div class="broadcast">
+                <textarea id="bc-msg" rows="3" placeholder="Message to ALL users (HTML allowed)…"></textarea>
+                <div class="broadcast-actions">
+                    <span id="bc-status" class="hint">—</span>
+                    <button id="bc-send">Send</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Users -->
+        <section class="block">
+            <h2><span class="b">[</span> users <span class="b">]</span></h2>
+
+            <div class="search">
+                <input id="users-search" type="text" placeholder="search by username, name or tg id…" autocomplete="off" />
+            </div>
+
+            <div class="table-wrap">
+                <table id="users-table">
+                    <thead>
+                        <tr>
+                            <th>id</th>
+                            <th>username</th>
+                            <th>name</th>
+                            <th>plan</th>
+                            <th>wallets</th>
+                            <th>joined</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td colspan="7" class="empty">loading…</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+
+    <!-- User detail drawer -->
+    <aside id="drawer" class="drawer" hidden>
+        <div class="drawer-head">
+            <span id="drawer-title">user</span>
+            <button id="drawer-close" aria-label="close">✕</button>
+        </div>
+        <div id="drawer-body"></div>
+    </aside>
+    <div id="drawer-backdrop" class="drawer-backdrop" hidden></div>
+
+    <div id="toast" class="toast" hidden></div>
+    <div id="error" class="error" hidden></div>
+
+    <script src="admin.js"></script>
+</body>
+</html>

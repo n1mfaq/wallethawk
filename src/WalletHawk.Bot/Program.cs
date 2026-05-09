@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Telegram.Bot;
 using WalletHawk.Bot;
+using WalletHawk.Bot.Admin;
 using WalletHawk.Bot.Handlers;
 using WalletHawk.Bot.MiniApp;
 using WalletHawk.Bot.Options;
@@ -54,6 +55,8 @@ builder.Services.AddCors(options =>
 var app = builder.Build();
 
 app.UseCors("PublicReadOnly");
+app.UseDefaultFiles();   // serves index.html from /admin/
+app.UseStaticFiles();    // serves wwwroot/* (admin UI)
 
 using (var scope = app.Services.CreateScope())
 {
@@ -80,5 +83,6 @@ app.MapGet("/stats", async (AppDbContext db, CancellationToken ct) =>
 }).WithName("PublicStats");
 
 app.MapMiniApp();
+app.MapAdminApi();
 
 await app.RunAsync();

@@ -70,6 +70,7 @@ public sealed class UpdateHandler : IUpdateHandler
 
                 // ── admin only ──
                 case "/admin": await CmdAdmin(bot, msg, ct); break;
+                case "/panel": await CmdPanel(bot, msg, ct); break;
                 case "/stats": await CmdAdminStats(bot, msg, ct); break;
                 case "/grant_pro": await CmdGrantPro(bot, msg, args, ct); break;
                 case "/revoke_pro": await CmdRevokePro(bot, msg, args, ct); break;
@@ -253,6 +254,27 @@ public sealed class UpdateHandler : IUpdateHandler
         string.IsNullOrEmpty(s) ? "" :
         s.Replace("&", "&amp;").Replace("<", "&lt;").Replace(">", "&gt;");
 
+    private async Task CmdPanel(ITelegramBotClient bot, Message msg, CancellationToken ct)
+    {
+        if (!RequireAdmin(msg)) { await CmdHelp(bot, msg, ct); return; }
+
+        if (string.IsNullOrEmpty(_opt.AdminWebAppUrl))
+        {
+            await bot.SendMessage(msg.Chat.Id, "Admin panel URL is not configured.", cancellationToken: ct);
+            return;
+        }
+
+        var keyboard = new Telegram.Bot.Types.ReplyMarkups.InlineKeyboardMarkup(
+            Telegram.Bot.Types.ReplyMarkups.InlineKeyboardButton.WithWebApp(
+                "🛠 Open admin panel",
+                new Telegram.Bot.Types.WebAppInfo(_opt.AdminWebAppUrl)));
+
+        await bot.SendMessage(msg.Chat.Id,
+            "Admin panel — KPI, users table, broadcast.",
+            replyMarkup: keyboard,
+            cancellationToken: ct);
+    }
+
     private async Task CmdAdmin(ITelegramBotClient bot, Message msg, CancellationToken ct)
     {
         if (!RequireAdmin(msg)) { await CmdHelp(bot, msg, ct); return; }
@@ -260,6 +282,7 @@ public sealed class UpdateHandler : IUpdateHandler
         var help =
             "🔑 <b>Admin commands</b>\n" +
             "<pre>" +
+            "/panel                       open web admin panel\n" +
             "/stats                       usage counters\n" +
             "/user @name | id             user info\n" +
             "/wallets @name | id          user's wallets\n" +

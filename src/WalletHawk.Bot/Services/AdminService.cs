@@ -79,7 +79,79 @@ public sealed class AdminService
             .Where(w => w.UserId == userId)
             .OrderBy(w => w.Id)
             .ToListAsync(ct);
+
+    /// <summary>Per-day new-user counts for the last <paramref name="days"/> days, oldest first.</summary>
+    public async Task<List<DailyCount>> GetDailyNewUsersAsync(int days, CancellationToken ct = default)
+    {
+        var since = DateTimeOffset.UtcNow.AddDays(-days).Date;
+        var rows = await _db.Users.AsNoTracking()
+            .Where(u => u.CreatedAt >= since)
+            .Select(u => u.CreatedAt)
+            .ToListAsync(ct);
+
+        return rows
+            .GroupBy(d => d.UtcDateTime.Date)
+            .Select(g => new DailyCount(g.Key.ToString("yyyy-MM-dd"), g.Count()))
+            .OrderBy(d => d.Date)
+            .ToList();
+    }
+
+    /// <summary>Per-day transaction counts for the last <paramref name="days"/> days, oldest first.</summary>
+    public async Task<List<DailyCount>> GetDailyTransactionsAsync(int days, CancellationToken ct = default)
+    {
+        var since = DateTimeOffset.UtcNow.AddDays(-days).Date;
+        var rows = await _db.Transactions.AsNoTracking()
+            .Where(t => t.BlockTime >= since)
+            .Select(t => t.BlockTime)
+            .ToListAsync(ct);
+
+        return rows
+            .GroupBy(d => d.UtcDateTime.Date)
+            .Select(g => new DailyCount(g.Key.ToString("yyyy-MM-dd"), g.Count()))
+            .OrderBy(d => d.Date)
+            .ToList();
+    }
+
+    public sealed record UserListRow(
+        long Id,
+        long TelegramUserId,
+        string? Username,
+        string? FirstName,
+        bool IsPro,
+        DateTimeOffset? ProUntil,
+        DateTimeOffset CreatedAt,
+        int WalletCount);
+
+    /// <summary>List users with optional search; returns up to 200 rows.</summary>
+    public async Task<List<UserListRow>> ListUsersAsync(string? search, CancellationToken ct = default)
+    {
+        var q = _db.Users.AsNoTracking().AsQueryable();
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            var s = search.TrimStart('@').ToLower();
+            q = q.Where(u =>
+                (u.Username != null && u.Username.ToLower().Contains(s)) ||
+                (u.FirstName != null && u.FirstName.ToLower().Contains(s)) ||
+                u.TelegramUserId.ToString().Contains(s));
+        }
+
+        return await q
+            .OrderByDescending(u => u.CreatedAt)
+            .Take(200)
+            .Select(u => new UserListRow(
+                u.Id,
+                u.TelegramUserId,
+                u.Username,
+                u.FirstName,
+                u.IsPro,
+                u.ProUntil,
+                u.CreatedAt,
+                _db.Wallets.Count(w => w.UserId == u.Id)))
+            .ToListAsync(ct);
+    }
 }
+
+public sealed record DailyCount(string Date, int Count);
 
 public sealed record AdminStats(
     int Users,
