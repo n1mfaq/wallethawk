@@ -1,4 +1,4 @@
-namespace WalletHawk.Bot.Options;
+﻿namespace WalletHawk.Bot.Options;
 
 public sealed class BotOptions
 {

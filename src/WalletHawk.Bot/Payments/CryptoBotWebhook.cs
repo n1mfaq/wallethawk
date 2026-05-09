@@ -1,8 +1,7 @@
-using System.Security.Cryptography;
+﻿using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using Microsoft.Extensions.Options;
-using Telegram.Bot;
 using WalletHawk.Domain.Abstractions;
 using WalletHawk.Infrastructure.Payments;
 

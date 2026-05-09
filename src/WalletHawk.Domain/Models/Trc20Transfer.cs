@@ -1,4 +1,4 @@
-namespace WalletHawk.Domain.Models;
+﻿namespace WalletHawk.Domain.Models;
 
 /// <summary>Normalised TRC20 transfer event from any explorer.</summary>
 public sealed record Trc20Transfer(

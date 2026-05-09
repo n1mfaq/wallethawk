@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using WalletHawk.Domain.Entities;
 
 namespace WalletHawk.Data;

@@ -1,4 +1,4 @@
-namespace WalletHawk.Worker.Options;
+﻿namespace WalletHawk.Worker.Options;
 
 public sealed class WorkerOptions
 {

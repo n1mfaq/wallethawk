@@ -1,9 +1,4 @@
-using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Routing;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
-using WalletHawk.Bot.Options;
+﻿using Microsoft.EntityFrameworkCore;
 using WalletHawk.Data;
 using WalletHawk.Domain.Entities;
 

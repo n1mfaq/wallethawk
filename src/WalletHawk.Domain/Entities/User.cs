@@ -1,4 +1,4 @@
-namespace WalletHawk.Domain.Entities;
+﻿namespace WalletHawk.Domain.Entities;
 
 public class User
 {

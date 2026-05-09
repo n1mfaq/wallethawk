@@ -1,4 +1,4 @@
-namespace WalletHawk.Domain.Abstractions;
+﻿namespace WalletHawk.Domain.Abstractions;
 
 public interface INotifier
 {

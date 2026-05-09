@@ -1,4 +1,4 @@
-using WalletHawk.Domain.Models;
+﻿using WalletHawk.Domain.Models;
 
 namespace WalletHawk.Domain.Abstractions;
 

@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Telegram.Bot;
 using WalletHawk.Bot;
 using WalletHawk.Bot.Admin;

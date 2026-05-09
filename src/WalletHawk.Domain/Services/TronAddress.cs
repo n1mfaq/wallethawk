@@ -1,4 +1,4 @@
-namespace WalletHawk.Domain.Services;
+﻿namespace WalletHawk.Domain.Services;
 
 public static class TronAddress
 {

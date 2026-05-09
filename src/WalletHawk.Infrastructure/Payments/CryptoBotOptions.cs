@@ -1,4 +1,4 @@
-namespace WalletHawk.Infrastructure.Payments;
+﻿namespace WalletHawk.Infrastructure.Payments;
 
 public sealed class CryptoBotOptions
 {

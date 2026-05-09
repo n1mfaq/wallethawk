@@ -1,6 +1,4 @@
-using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Options;
+﻿using Microsoft.Extensions.Options;
 using WalletHawk.Bot.MiniApp;
 using WalletHawk.Bot.Options;
 using WalletHawk.Bot.Services;

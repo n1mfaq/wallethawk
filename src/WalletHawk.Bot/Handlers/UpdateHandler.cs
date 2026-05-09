@@ -1,5 +1,4 @@
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
+﻿using Microsoft.Extensions.Options;
 using Telegram.Bot;
 using Telegram.Bot.Polling;
 using Telegram.Bot.Types;
@@ -480,16 +479,4 @@ public sealed class UpdateHandler : IUpdateHandler
             $"📢 Broadcast done: {ok} delivered, {failed} failed (out of {ids.Count}).",
             cancellationToken: ct);
     }
-
-    /// <summary>Escape MarkdownV2 reserved chars.</summary>
-    private static string Esc(string s)
-    {
-        ReadOnlySpan<char> reserved = "_*[]()~`>#+-=|{}.!";
-        var sb = new System.Text.StringBuilder(s.Length);
-        foreach (var c in s)
-        {
-            if (reserved.IndexOf(c) >= 0) sb.Append('\\');
-            sb.Append(c);
-        }
-        return sb.ToString();
-    }}
+}

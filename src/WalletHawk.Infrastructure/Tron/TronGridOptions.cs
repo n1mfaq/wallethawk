@@ -1,4 +1,4 @@
-namespace WalletHawk.Infrastructure.Tron;
+﻿namespace WalletHawk.Infrastructure.Tron;
 
 public sealed class TronGridOptions
 {
