@@ -276,14 +276,17 @@ public sealed class UpdateHandler : IUpdateHandler
 
         var s = await _admin.GetStatsAsync(ct);
         var mrr = (s.Pro * 4.99m).ToString("0.00");
+
+        // HTML <pre> = monospace block, columns line up nicely in any client.
         var text =
-            "📊 WalletHawk stats\n\n" +
-            $"users:    {s.Users}  (+{s.NewUsers24h} in 24h)\n" +
-            $"pro:      {s.Pro}\n" +
-            $"wallets:  {s.Wallets}  (+{s.NewWallets24h} in 24h)\n" +
-            $"mrr:      ${mrr}";
-        // Plain text — admin output doesn't need rich formatting and avoids MarkdownV2 escaping headaches.
-        await bot.SendMessage(msg.Chat.Id, text, cancellationToken: ct);
+            "📊 <b>WalletHawk stats</b>\n" +
+            "<pre>" +
+            $"users    │ {s.Users,4}   (+{s.NewUsers24h} in 24h)\n" +
+            $"pro      │ {s.Pro,4}\n" +
+            $"wallets  │ {s.Wallets,4}   (+{s.NewWallets24h} in 24h)\n" +
+            $"mrr      │ ${mrr}" +
+            "</pre>";
+        await bot.SendMessage(msg.Chat.Id, text, parseMode: ParseMode.Html, cancellationToken: ct);
     }
 
     private async Task CmdGrantPro(ITelegramBotClient bot, Message msg, string args, CancellationToken ct)
