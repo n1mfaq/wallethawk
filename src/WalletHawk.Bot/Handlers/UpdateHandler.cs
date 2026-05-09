@@ -277,11 +277,11 @@ public sealed class UpdateHandler : IUpdateHandler
         var s = await _admin.GetStatsAsync(ct);
         var mrr = (s.Pro * 4.99m).ToString("0.00");
         var text =
-            "*WalletHawk — stats*\n\n" +
-            $"users: *{s.Users}* (+{s.NewUsers24h} in 24h)\n" +
-            $"pro: *{s.Pro}*\n" +
-            $"wallets: *{s.Wallets}* (+{s.NewWallets24h} in 24h)\n" +
-            $"mrr: *${mrr}*";
+            "📊 WalletHawk stats\n\n" +
+            $"users:    {s.Users}  (+{s.NewUsers24h} in 24h)\n" +
+            $"pro:      {s.Pro}\n" +
+            $"wallets:  {s.Wallets}  (+{s.NewWallets24h} in 24h)\n" +
+            $"mrr:      ${mrr}";
         // Plain text — admin output doesn't need rich formatting and avoids MarkdownV2 escaping headaches.
         await bot.SendMessage(msg.Chat.Id, text, cancellationToken: ct);
     }
