@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>WalletHawk — TRC20 wallet tracker bot for Telegram</title>
+    <meta name="description" content="WalletHawk watches your Tron (TRC20) wallets and pings you in Telegram the moment USDT moves in or out." />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+    <div class="bg-grid" aria-hidden="true"></div>
+    <div class="bg-glow g1" aria-hidden="true"></div>
+    <div class="bg-glow g2" aria-hidden="true"></div>
+
+    <header class="nav">
+        <a class="logo" href="#">🦅 <span>WalletHawk</span></a>
+        <nav>
+            <a href="#features">features</a>
+            <a href="#pricing">pricing</a>
+            <a href="#faq">faq</a>
+            <a class="cta" href="https://t.me/wallethawk_bot" target="_blank" rel="noopener noreferrer">launch bot →</a>
+        </nav>
+    </header>
+
+    <main>
+        <section class="hero">
+            <span class="status">
+                <span class="dot"></span> live · TRC20 USDT tracking
+            </span>
+            <h1>Watch your <span class="grad">TRC20</span> wallets in&nbsp;Telegram.</h1>
+            <p class="lead">
+                Add a Tron address — get instant alerts the moment USDT moves in or out.
+                No browser tabs, no manual TronScan refreshes. Built for traders, P2P sellers and on-chain freelancers.
+            </p>
+            <div class="hero-cta">
+                <a class="btn primary" href="https://t.me/wallethawk_bot" target="_blank" rel="noopener noreferrer">
+                    open in telegram
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg>
+                </a>
+                <a class="btn ghost" href="https://github.com/n1mfaq/wallethawk" target="_blank" rel="noopener noreferrer">github</a>
+            </div>
+
+            <div class="demo">
+                <div class="demo-head">
+                    <span class="d-dot r"></span><span class="d-dot y"></span><span class="d-dot g"></span>
+                    <span class="d-title">@wallethawk_bot</span>
+                </div>
+                <div class="demo-body">
+                    <div class="msg me">/add TKasX7gvbdvg4nnJ8BzQ2TNWrKjXpieHau coffee fund</div>
+                    <div class="msg bot">✅ Tracking <code>TKasX7…pieHau</code></div>
+                    <div class="msg bot alert">
+                        <b>📥 IN  500.00 USDT</b><br>
+                        wallet: <code>coffee fund</code><br>
+                        from: <code>TXyz12…aBcDef</code>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="features" class="section">
+            <h2><span class="b">[</span> features <span class="b">]</span></h2>
+            <div class="grid">
+                <article class="card">
+                    <div class="ico">⚡</div>
+                    <h3>Realtime alerts</h3>
+                    <p>Polling every 30 seconds. Get notified before TronScan even shows the tx as confirmed in your browser.</p>
+                </article>
+                <article class="card">
+                    <div class="ico">🏷️</div>
+                    <h3>Labels &amp; multi-wallet</h3>
+                    <p>Track unlimited wallets with custom labels. Group by purpose: trading, P2P, savings, hot spend.</p>
+                </article>
+                <article class="card">
+                    <div class="ico">🔐</div>
+                    <h3>Read-only &amp; private</h3>
+                    <p>We only watch public on-chain data. No private keys, no signing, no custody. Open-source code on GitHub.</p>
+                </article>
+                <article class="card">
+                    <div class="ico">📊</div>
+                    <h3>Direction + counterparty</h3>
+                    <p>Each alert shows IN/OUT, exact amount, label and counterparty address — with a one-click link to TronScan.</p>
+                </article>
+            </div>
+        </section>
+
+        <section id="pricing" class="section">
+            <h2><span class="b">[</span> pricing <span class="b">]</span></h2>
+            <div class="plans">
+                <article class="plan">
+                    <h3>Free</h3>
+                    <p class="price">$0</p>
+                    <ul>
+                        <li>1 wallet</li>
+                        <li>30s polling</li>
+                        <li>USDT TRC20</li>
+                    </ul>
+                    <a class="btn ghost" href="https://t.me/wallethawk_bot" target="_blank" rel="noopener noreferrer">try now</a>
+                </article>
+                <article class="plan featured">
+                    <span class="badge">recommended</span>
+                    <h3>Pro</h3>
+                    <p class="price">$4.99<span>/mo</span></p>
+                    <ul>
+                        <li>unlimited wallets</li>
+                        <li>priority support</li>
+                        <li>early access to new networks</li>
+                    </ul>
+                    <a class="btn primary" href="https://t.me/cwiwi9" target="_blank" rel="noopener noreferrer">go pro</a>
+                </article>
+            </div>
+        </section>
+
+        <section id="faq" class="section">
+            <h2><span class="b">[</span> faq <span class="b">]</span></h2>
+            <div class="faq">
+                <details>
+                    <summary>Is it safe to give the bot my address?</summary>
+                    <p>Yes — we only read public blockchain data via TronGrid. The bot never asks for keys, seeds or signatures. Source code is public on GitHub.</p>
+                </details>
+                <details>
+                    <summary>How fast are the alerts?</summary>
+                    <p>Polling runs every 30 seconds. In practice you'll see a notification within 30–60s of the on-chain confirmation.</p>
+                </details>
+                <details>
+                    <summary>Which networks are supported?</summary>
+                    <p>Right now: USDT on Tron (TRC20). BSC, Ethereum and BTC are on the roadmap.</p>
+                </details>
+                <details>
+                    <summary>Can I self-host it?</summary>
+                    <p>Yes — the project is MIT and ships with docker-compose. See the README on GitHub.</p>
+                </details>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>© <span id="year"></span> WalletHawk · <a href="https://github.com/n1mfaq/wallethawk" target="_blank" rel="noopener noreferrer">github</a> · <a href="https://t.me/cwiwi9" target="_blank" rel="noopener noreferrer">contact</a></p>
+    </footer>
+
+    <script>
+        document.getElementById('year').textContent = new Date().getFullYear();
+    </script>
+</body>
+</html>

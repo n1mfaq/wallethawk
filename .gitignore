@@ -1,0 +1,23 @@
+## .NET
+bin/
+obj/
+*.user
+*.suo
+.vs/
+.idea/
+.vscode/
+
+## Node / Web
+node_modules/
+
+## OS
+.DS_Store
+Thumbs.db
+
+## Secrets
+.env
+.env.*
+!.env.example
+
+## Logs
+*.log

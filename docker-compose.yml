@@ -1,0 +1,53 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: wallethawk-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: wallethawk
+      POSTGRES_USER: wallethawk
+      POSTGRES_PASSWORD: wallethawk
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U wallethawk"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  bot:
+    build:
+      context: .
+      dockerfile: src/WalletHawk.Bot/Dockerfile
+    image: wallethawk-bot
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      ConnectionStrings__Postgres: "Host=postgres;Port=5432;Database=wallethawk;Username=wallethawk;Password=wallethawk"
+      Bot__Token: "${BOT_TOKEN}"
+      Bot__OwnerUsername: "${BOT_OWNER:-cwiwi9}"
+      TronGrid__ApiKey: "${TRONGRID_API_KEY:-}"
+
+  worker:
+    build:
+      context: .
+      dockerfile: src/WalletHawk.Worker/Dockerfile
+    image: wallethawk-worker
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      bot:
+        condition: service_started
+    environment:
+      ConnectionStrings__Postgres: "Host=postgres;Port=5432;Database=wallethawk;Username=wallethawk;Password=wallethawk"
+      Bot__Token: "${BOT_TOKEN}"
+      Worker__PollSeconds: "30"
+      TronGrid__ApiKey: "${TRONGRID_API_KEY:-}"
+
+volumes:
+  pgdata:

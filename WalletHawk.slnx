@@ -1,0 +1,9 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/WalletHawk.Bot/WalletHawk.Bot.csproj" />
+    <Project Path="src/WalletHawk.Data/WalletHawk.Data.csproj" />
+    <Project Path="src/WalletHawk.Domain/WalletHawk.Domain.csproj" />
+    <Project Path="src/WalletHawk.Infrastructure/WalletHawk.Infrastructure.csproj" />
+    <Project Path="src/WalletHawk.Worker/WalletHawk.Worker.csproj" />
+  </Folder>
+</Solution>
